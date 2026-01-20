@@ -2,6 +2,7 @@ package cn.itcast.hotel;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 
@@ -18,6 +19,7 @@ import cn.itcast.hotel.pojo.HotelDoc;
 import cn.itcast.hotel.service.IHotelService;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.Result;
+import co.elastic.clients.elasticsearch.core.GetResponse;
 import co.elastic.clients.elasticsearch.core.IndexResponse;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
@@ -37,7 +39,7 @@ public class HotelDocumentTest {
     private String indexName = "hotel";
 
     @Test
-    void testAddDocument() throws IOException{
+    void testAddDocument() throws IOException {
         // 根据 id 查询酒店数据
         Hotel hotel = hotelService.getById(61075L);
 
@@ -53,6 +55,24 @@ public class HotelDocumentTest {
         // 断言：ES 是否接受了这次写入
         assertNotNull(response);
         assertEquals(Result.Created, response.result());
+    }
+
+    @Test
+    void testGetDocumentById() throws IOException{
+        String idValue = "61075";
+
+        // 根据 id 从 ES 中查询文档
+        GetResponse<HotelDoc> response = client.get(g -> g
+                .index(indexName)
+                .id(idValue),
+                HotelDoc.class);
+        assertTrue(response.found(), "ES 中应该存在 id=" + idValue + " 的文档");
+
+        // 拿到文档内容
+        HotelDoc hotelDoc = response.source();
+
+        assertNotNull(hotelDoc);
+        log.debug("hotelDoc = {}", hotelDoc);
     }
 
     @BeforeEach
