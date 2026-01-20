@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.http.HttpHost;
 import org.elasticsearch.client.RestClient;
@@ -21,6 +23,7 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.Result;
 import co.elastic.clients.elasticsearch.core.GetResponse;
 import co.elastic.clients.elasticsearch.core.IndexResponse;
+import co.elastic.clients.elasticsearch.core.UpdateResponse;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
@@ -58,7 +61,7 @@ public class HotelDocumentTest {
     }
 
     @Test
-    void testGetDocumentById() throws IOException{
+    void testGetDocumentById() throws IOException {
         String idValue = "61075";
 
         // 根据 id 从 ES 中查询文档
@@ -73,6 +76,27 @@ public class HotelDocumentTest {
 
         assertNotNull(hotelDoc);
         log.debug("hotelDoc = {}", hotelDoc);
+    }
+
+    @Test
+    void testUpdateDocument() throws IOException{
+        String idValue = "61075";
+
+        // 1. 构造局部更新内容
+        Map<String, Object> updateFields = new HashMap<>();
+        updateFields.put("price", 399);
+        updateFields.put("score", 4.8);
+
+        // 2. 调用 update API
+        UpdateResponse<HotelDoc> response = client.update(u -> u
+                .index(indexName)
+                .id(idValue)
+                .doc(updateFields),
+                HotelDoc.class);
+
+        // 3. 断言：更新成功
+        assertNotNull(response);
+        assertEquals(Result.Updated, response.result());
     }
 
     @BeforeEach
