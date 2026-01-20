@@ -1,0 +1,24 @@
+<!DOCTYPE configuration>
+<configuration>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss} %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- 只让你自己的代码 DEBUG -->
+    <logger name="cn.itcast" level="DEBUG"/>
+
+    <!-- ES / HTTP 客户端降噪 -->
+    <logger name="org.elasticsearch" level="INFO"/>
+    <logger name="org.apache.http" level="INFO"/>
+    <logger name="org.apache.http.wire" level="WARN"/>
+
+    <!-- root 一定要稳住 -->
+    <root level="INFO">
+        <appender-ref ref="STDOUT"/>
+    </root>
+
+</configuration>
+
