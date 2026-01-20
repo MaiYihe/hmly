@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
+import co.elastic.clients.transport.endpoints.BooleanResponse;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
 import lombok.extern.slf4j.Slf4j;
 
@@ -20,6 +21,8 @@ public class HotelIndexTest {
     private RestClient restClient;
     private ElasticsearchClient client;
 
+    private String indexName = "hotel";
+
     @Test
     void testInit() {
         System.out.println(client);
@@ -27,8 +30,6 @@ public class HotelIndexTest {
 
     @Test
     void createHotelIndex() throws IOException {
-        String indexName = "hotel";
-
         log.debug("Checking if index [{}] exists...", indexName);
 
         // 先判断 ES 中该索引是否存在
@@ -51,13 +52,46 @@ public class HotelIndexTest {
         if (is == null) {
             throw new IllegalStateException("Mapping file not found: es/hotel-index.json");
         }
-        
+
         // 创建索引
         client.indices().create(c -> c
                 .index(indexName)
                 .withJson(is));
 
         log.info("Index [{}] created successfully.", indexName);
+    }
+
+    @Test
+    void testDeleteHotelIndex() throws IOException {
+        // 先判断 ES 中该索引是否存在
+        boolean exists = client.indices()
+                .exists(e -> e.index(indexName))
+                .value();
+
+        if (!exists) {
+            log.debug("Index [{}] do not exists, skip creation.", indexName);
+            return;
+        }
+
+        log.debug("Index [{}] will be deleted.", indexName);
+        // 删除索引
+        client.indices().delete(c -> c
+                .index(indexName));
+    }
+
+    @Test
+    void testExistHotelIndex() throws IOException{
+        BooleanResponse exists = client.indices().exists(c -> c
+                .index(indexName));
+
+        boolean indexExists = exists.value();
+
+        if(indexExists){
+            log.debug("{} 索引已存在",indexName);
+        }
+        else{
+            log.error("{} 索引不存在",indexName);
+        }
     }
 
     @BeforeEach
