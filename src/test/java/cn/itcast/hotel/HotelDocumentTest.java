@@ -1,12 +1,16 @@
 package cn.itcast.hotel;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.http.HttpHost;
 import org.elasticsearch.client.RestClient;
@@ -21,6 +25,8 @@ import cn.itcast.hotel.pojo.HotelDoc;
 import cn.itcast.hotel.service.IHotelService;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.Result;
+import co.elastic.clients.elasticsearch.core.BulkRequest;
+import co.elastic.clients.elasticsearch.core.BulkResponse;
 import co.elastic.clients.elasticsearch.core.DeleteResponse;
 import co.elastic.clients.elasticsearch.core.GetResponse;
 import co.elastic.clients.elasticsearch.core.IndexResponse;
@@ -59,6 +65,34 @@ public class HotelDocumentTest {
         // 断言：ES 是否接受了这次写入
         assertNotNull(response);
         assertEquals(Result.Created, response.result());
+    }
+
+    // 批量新增文档
+    @Test
+    void testBulkAddDocument() throws IOException {
+        // 1. 查询数据库
+        List<Long> ids = Stream.of(36934L, 38609L, 38665L)
+                .collect(Collectors.toList());
+        List<Hotel> hotels = hotelService.listByIds(ids);
+
+        // 2. 构建 BulkRequest
+        BulkRequest.Builder br = new BulkRequest.Builder();
+
+        for (Hotel hotel : hotels) {
+            HotelDoc hotelDoc = new HotelDoc(hotel);
+
+            br.operations(op -> op
+                    .index(idx -> idx
+                            .index(indexName)
+                            .id(hotelDoc.getId().toString())
+                            .document(hotelDoc)));
+        }
+
+        // 3. 执行批量写入
+        BulkResponse response = client.bulk(br.build());
+
+        // 4. 判断是否有失败
+        assertFalse(response.errors());
     }
 
     @Test
@@ -101,14 +135,14 @@ public class HotelDocumentTest {
     }
 
     @Test
-    void testDeleteDocument() throws IOException{
+    void testDeleteDocument() throws IOException {
         String idValue = "61075";
 
         DeleteResponse response = client.delete(d -> d
                 .index("hotel")
                 .id(idValue));
 
-        log.error("delete result= "+ response.result());
+        log.error("delete result= " + response.result());
     }
 
     @BeforeEach
