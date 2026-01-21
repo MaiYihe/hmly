@@ -21,6 +21,7 @@ import cn.itcast.hotel.pojo.HotelDoc;
 import cn.itcast.hotel.service.IHotelService;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.Result;
+import co.elastic.clients.elasticsearch.core.DeleteResponse;
 import co.elastic.clients.elasticsearch.core.GetResponse;
 import co.elastic.clients.elasticsearch.core.IndexResponse;
 import co.elastic.clients.elasticsearch.core.UpdateResponse;
@@ -79,7 +80,7 @@ public class HotelDocumentTest {
     }
 
     @Test
-    void testUpdateDocument() throws IOException{
+    void testUpdateDocument() throws IOException {
         String idValue = "61075";
 
         // 1. 构造局部更新内容
@@ -97,6 +98,17 @@ public class HotelDocumentTest {
         // 3. 断言：更新成功
         assertNotNull(response);
         assertEquals(Result.Updated, response.result());
+    }
+
+    @Test
+    void testDeleteDocument() throws IOException{
+        String idValue = "61075";
+
+        DeleteResponse response = client.delete(d -> d
+                .index("hotel")
+                .id(idValue));
+
+        log.error("delete result= "+ response.result());
     }
 
     @BeforeEach
