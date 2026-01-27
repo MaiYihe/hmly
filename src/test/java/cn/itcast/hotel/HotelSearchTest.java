@@ -36,6 +36,7 @@ public class HotelSearchTest {
         this.restClient.close();
     }
 
+    // 查询所有
     @Test
     void testMatchAll() throws IOException {
         SearchResponse<Object> response = client.search(s -> s
@@ -51,6 +52,25 @@ public class HotelSearchTest {
             log.info("Doc ID = {}", hit.id());
             log.info("Source = {}", hit.source());
             log.info("--------------------------");
+        }
+    }
+
+    // 全文检索查询
+    @Test
+    void testMultiMatch() throws IOException {
+        SearchResponse<Object> response = client.search(s -> s
+                .index("hotel")
+                .query(q -> q
+                        .multiMatch(mm -> mm
+                                .query("如家")
+                                .fields("brand", "name"))),
+                Object.class);
+
+        log.info("Total hits = {}", response.hits().total().value());
+
+        for (Hit<Object> hit : response.hits().hits()) {
+            log.info("Doc ID = {}", hit.id());
+            log.info("Source = {}", hit.source());
         }
     }
 
