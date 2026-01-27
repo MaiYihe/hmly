@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
+import co.elastic.clients.json.JsonData;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
@@ -71,6 +72,33 @@ public class HotelSearchTest {
         for (Hit<Object> hit : response.hits().hits()) {
             log.info("Doc ID = {}", hit.id());
             log.info("Source = {}", hit.source());
+        }
+    }
+
+    // 复合查询结合精确查询
+    @Test
+    void testBoolMustAndFilter() throws IOException {
+        SearchResponse<Object> response = client.search(s -> s
+                .index("hotel")
+                .query(q -> q
+                        .bool(b -> b
+                                .must(m -> m
+                                        .term(t -> t
+                                                .field("city")
+                                                .value("杭州")))
+                                .filter(f -> f
+                                        .range(r -> r
+                                                .field("price")
+                                                .lte(JsonData.of(250)))))),
+                Object.class);
+
+        log.info("Total hits = {}", response.hits().total().value());
+
+        for (Hit<Object> hit : response.hits().hits()) {
+            log.info("Doc ID = {}", hit.id());
+            log.info("Score = {}", hit.score());
+            log.info("Source = {}", hit.source());
+            log.info("------------------------");
         }
     }
 
